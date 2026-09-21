@@ -8,10 +8,8 @@
   <img src="https://img.shields.io/badge/License-MIT-yellow" alt="MIT" />
 </p>
 
-<!-- GitHub badges (activate after the first push; replace <owner>/<repo>):
-  <img src="https://img.shields.io/github/actions/workflow/status/<owner>/<repo>/ci.yml?label=CI&logo=github" alt="CI" />
-  <img src="https://img.shields.io/github/v/release/<owner>/<repo>?label=Release" alt="Release" />
--->
+<img src="https://img.shields.io/github/actions/workflow/status/CriDos/RegistroExample/ci.yml?label=CI&logo=github" alt="CI" />
+  <img src="https://img.shields.io/github/v/release/CriDos/RegistroExample?label=Release" alt="Release" />
 
 Пример клиент-серверного справочника клиентов на Qt 6, в котором QML-клиент обменивается с REST-сервером (QHttpServer) по общему JSON-контракту, сервер хранит данные в SQLite, зависимости между слоями строго направлены, а из внешних библиотек используется только сам Qt.
 
