@@ -6,10 +6,9 @@
   <img src="https://img.shields.io/badge/C%2B%2B-MSVC_2022-00599c?logo=cplusplus&logoColor=white" alt="C++ / MSVC 2022" />
   <img src="https://img.shields.io/badge/CMake-%E2%89%A5%203.25-064F8C?logo=cmake&logoColor=white" alt="CMake ≥ 3.25" />
   <img src="https://img.shields.io/badge/License-MIT-yellow" alt="MIT" />
-</p>
-
-<img src="https://img.shields.io/github/actions/workflow/status/CriDos/RegistroExample/ci.yml?label=CI&logo=github" alt="CI" />
+  <img src="https://img.shields.io/github/actions/workflow/status/CriDos/RegistroExample/ci.yml?label=CI&logo=github" alt="CI" />
   <img src="https://img.shields.io/github/v/release/CriDos/RegistroExample?label=Release" alt="Release" />
+</p>
 
 Пример клиент-серверного справочника клиентов на Qt 6, в котором QML-клиент обменивается с REST-сервером (QHttpServer) по общему JSON-контракту, сервер хранит данные в SQLite, зависимости между слоями строго направлены, а из внешних библиотек используется только сам Qt.
 
