@@ -1,0 +1,90 @@
+{
+  "version": 6,
+  "cmakeMinimumRequired": {
+    "major": 3,
+    "minor": 25,
+    "patch": 0
+  },
+  "configurePresets": [
+    {
+      "name": "debug",
+      "displayName": "Debug (Ninja, MSVC)",
+      "generator": "Ninja",
+      "binaryDir": "${sourceDir}/build",
+      "cacheVariables": {
+        "CMAKE_BUILD_TYPE": "Debug"
+      }
+    },
+    {
+      "name": "release",
+      "displayName": "Release (Ninja, MSVC)",
+      "generator": "Ninja",
+      "binaryDir": "${sourceDir}/build-release",
+      "cacheVariables": {
+        "CMAKE_BUILD_TYPE": "Release"
+      }
+    },
+    {
+      "name": "asan",
+      "inherits": "debug",
+      "displayName": "Debug + AddressSanitizer (Ninja, MSVC)",
+      "binaryDir": "${sourceDir}/build-asan",
+      "cacheVariables": {
+        "CMAKE_BUILD_TYPE": "Debug",
+        "REGISTRO_ENABLE_ASAN": "ON"
+      }
+    },
+    {
+      "name": "analyze",
+      "inherits": "debug",
+      "displayName": "Debug + MSVC static analysis (/analyze)",
+      "binaryDir": "${sourceDir}/build-analyze",
+      "cacheVariables": {
+        "CMAKE_BUILD_TYPE": "Debug",
+        "REGISTRO_ENABLE_ANALYZE": "ON"
+      }
+    }
+  ],
+  "buildPresets": [
+    { "name": "debug", "configurePreset": "debug" },
+    { "name": "release", "configurePreset": "release" },
+    { "name": "asan", "configurePreset": "asan" },
+    { "name": "analyze", "configurePreset": "analyze" }
+  ],
+  "testPresets": [
+    {
+      "name": "debug",
+      "configurePreset": "debug",
+      "output": { "outputOnFailure": true }
+    },
+    {
+      "name": "release",
+      "configurePreset": "release",
+      "output": { "outputOnFailure": true }
+    },
+    {
+      "name": "asan",
+      "configurePreset": "asan",
+      "output": { "outputOnFailure": true }
+    }
+  ],
+  "workflowPresets": [
+    {
+      "name": "ci",
+      "displayName": "CI: configure + build + test (debug)",
+      "steps": [
+        { "type": "configure", "name": "debug" },
+        { "type": "build", "name": "debug" },
+        { "type": "test", "name": "debug" }
+      ]
+    },
+    {
+      "name": "analyze",
+      "displayName": "Static analysis (/analyze)",
+      "steps": [
+        { "type": "configure", "name": "analyze" },
+        { "type": "build", "name": "analyze" }
+      ]
+    }
+  ]
+}

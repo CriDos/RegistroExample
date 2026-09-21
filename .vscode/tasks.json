@@ -1,0 +1,115 @@
+{
+  "version": "2.0.0",
+  "tasks": [
+    {
+      "label": "Build",
+      "type": "process",
+      "command": "${env:ComSpec}",
+      "args": [
+        "/c",
+        "${workspaceFolder}/scripts/run-vs.cmd",
+        "cmake",
+        "--build",
+        "--preset",
+        "debug"
+      ],
+      "group": { "kind": "build", "isDefault": true },
+      "problemMatcher": ["$msCompile"]
+    },
+    {
+      "label": "Run server (background)",
+      "type": "process",
+      "command": "${env:ComSpec}",
+      "args": [
+        "/c",
+        "${workspaceFolder}/scripts/run-vs.cmd",
+        "${workspaceFolder}/build/RegistroServer.exe",
+        "--port",
+        "9080",
+        "--log-level",
+        "debug"
+      ],
+      "isBackground": true,
+      "problemMatcher": {
+        "owner": "registro-server",
+        "pattern": { "regexp": "^.*$" },
+        "background": {
+          "activeOnStart": true,
+          "beginsPattern": ".*",
+          "endsPattern": "listening"
+        }
+      }
+    },
+    {
+      "label": "Build + Run stack (background)",
+      "dependsOn": ["Build", "Run server (background)"],
+      "dependsOrder": "sequence",
+      "problemMatcher": []
+    },
+    {
+      "label": "Run server",
+      "type": "process",
+      "command": "${env:ComSpec}",
+      "args": [
+        "/c",
+        "${workspaceFolder}/scripts/run-vs.cmd",
+        "${workspaceFolder}/build/RegistroServer.exe",
+        "--port",
+        "9080",
+        "--log-level",
+        "debug"
+      ],
+      "problemMatcher": []
+    },
+    {
+      "label": "Run client",
+      "type": "process",
+      "command": "${env:ComSpec}",
+      "args": [
+        "/c",
+        "${workspaceFolder}/scripts/run-vs.cmd",
+        "${workspaceFolder}/build/RegistroClient.exe",
+        "http://127.0.0.1:9080"
+      ],
+      "problemMatcher": []
+    },
+    {
+      "label": "Run tests",
+      "type": "process",
+      "command": "${env:ComSpec}",
+      "args": [
+        "/c",
+        "${workspaceFolder}/scripts/run-vs.cmd",
+        "ctest",
+        "--preset",
+        "debug"
+      ],
+      "problemMatcher": []
+    },
+    {
+      "label": "Static analysis (/analyze)",
+      "type": "process",
+      "command": "${env:ComSpec}",
+      "args": [
+        "/c",
+        "${workspaceFolder}/scripts/run-vs.cmd",
+        "cmake",
+        "--workflow",
+        "--preset",
+        "analyze"
+      ],
+      "problemMatcher": ["$msCompile"]
+    },
+    {
+      "label": "Format sources (clang-format + qmlformat)",
+      "type": "process",
+      "command": "${env:ComSpec}",
+      "args": [
+        "/c",
+        "${workspaceFolder}/scripts/run-vs.cmd",
+        "${workspaceFolder}/scripts/format.cmd"
+      ],
+      "problemMatcher": []
+    }
+  ]
+}

@@ -1,0 +1,133 @@
+name: Release
+
+on:
+  push:
+    tags:
+      - "v*"
+  workflow_dispatch:
+    inputs:
+      tag:
+        description: "Release tag, for example v1.0.0"
+        required: true
+        type: string
+
+permissions:
+  contents: write
+
+jobs:
+  release:
+    name: Build and Publish Release
+    runs-on: windows-latest
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v5
+        with:
+          fetch-depth: 0
+
+      - name: Setup Developer Command Prompt (MSVC x64)
+        uses: ilammy/msvc-dev-cmd@v1
+        with:
+          arch: x64
+
+      - name: Install Qt 6.8.3 (MSVC 2022 x64)
+        uses: jurplel/install-qt-action@v4
+        with:
+          version: "6.8.3"
+          arch: "win64_msvc2022_64"
+          modules: "qthttpserver qtwebsockets"
+          cache: true
+
+      - name: Resolve release metadata
+        id: meta
+        shell: pwsh
+        run: |
+          if ("${{ github.event_name }}" -eq "workflow_dispatch") {
+            $tag = "${{ github.event.inputs.tag }}".Trim()
+          } else {
+            $tag = "${{ github.ref_name }}".Trim()
+          }
+
+          if ($tag.StartsWith("refs/tags/")) {
+            $tag = $tag.Substring("refs/tags/".Length)
+          }
+
+          if ([string]::IsNullOrWhiteSpace($tag)) {
+            throw "Release tag is empty."
+          }
+
+          if (-not $tag.StartsWith("v")) {
+            if ($tag -match "^\d+(\.\d+){1,3}$") {
+              $tag = "v$tag"
+            } else {
+              throw "Tag must be like v1.0.0 or 1.0.0."
+            }
+          }
+
+          $version = $tag.TrimStart("v")
+
+          "tag=$tag" >> $env:GITHUB_OUTPUT
+          "version=$version" >> $env:GITHUB_OUTPUT
+          "name=RegistroExample $tag" >> $env:GITHUB_OUTPUT
+
+      - name: Check version matches CMakeLists
+        shell: pwsh
+        run: |
+          $ver = "${{ steps.meta.outputs.version }}"
+          $cmake = Get-Content CMakeLists.txt -Raw
+          if ($cmake -notmatch 'VERSION\s+(\d+\.\d+\.\d+)') {
+            throw "Cannot parse project version from CMakeLists.txt"
+          }
+          $cmakeVer = $Matches[1]
+          if ($cmakeVer -ne $ver) {
+            throw "Tag version '$ver' does not match project(VERSION $cmakeVer) in CMakeLists.txt"
+          }
+          "CMakeLists version $cmakeVer matches tag version $ver"
+
+      - name: Resolve release notes from commit message
+        id: notes
+        shell: pwsh
+        run: |
+          $tag = "${{ steps.meta.outputs.tag }}"
+          git fetch --tags --force origin 2>$null
+          $sha = (git rev-list -n 1 "refs/tags/$tag" 2>$null)
+          if (-not $sha) { throw "Tag $tag not found in the repository." }
+          $sha = $sha.Trim()
+          $msg = ((git log -1 --format=%B $sha) -join "`n").Trim()
+          if ([string]::IsNullOrWhiteSpace($msg)) {
+            $msg = "Release $tag"
+          }
+          "body<<RELEASE_BODY_EOF" >> $env:GITHUB_OUTPUT
+          $msg >> $env:GITHUB_OUTPUT
+          "RELEASE_BODY_EOF" >> $env:GITHUB_OUTPUT
+
+      - name: Build & Package Distribution Zip
+        id: package
+        shell: pwsh
+        run: |
+          $ver = "${{ steps.meta.outputs.version }}"
+          & .\scripts\release.ps1 -Version $ver -QtPrefix $env:QT_ROOT_DIR
+
+          $zipPath = "dist\RegistroExample-$ver-win64.zip"
+          if (-not (Test-Path $zipPath)) {
+            throw "Expected release zip not found: $zipPath"
+          }
+          "zip=$zipPath" >> $env:GITHUB_OUTPUT
+
+      - name: Upload Workflow Artifact
+        uses: actions/upload-artifact@v5
+        with:
+          name: registro-release-zip
+          path: ${{ steps.package.outputs.zip }}
+          if-no-files-found: error
+          retention-days: 30
+
+      - name: Publish GitHub Release
+        uses: softprops/action-gh-release@v2
+        with:
+          tag_name: ${{ steps.meta.outputs.tag }}
+          name: ${{ steps.meta.outputs.name }}
+          body: ${{ steps.notes.outputs.body }}
+          files: ${{ steps.package.outputs.zip }}
+          generate_release_notes: true
+          fail_on_unmatched_files: true

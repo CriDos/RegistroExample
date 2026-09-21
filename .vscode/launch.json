@@ -1,0 +1,115 @@
+{
+  "version": "0.2.0",
+  "configurations": [
+    {
+      "name": "Server + Client",
+      "type": "cppvsdbg",
+      "request": "launch",
+      "program": "${workspaceFolder}/build/RegistroClient.exe",
+      "args": ["http://127.0.0.1:9080"],
+      "stopAtEntry": false,
+      "cwd": "${workspaceFolder}/build",
+      "console": "integratedTerminal",
+      "preLaunchTask": "Build + Run stack (background)"
+    },
+    {
+      "name": "Debug server",
+      "type": "cppvsdbg",
+      "request": "launch",
+      "program": "${workspaceFolder}/build/RegistroServer.exe",
+      "args": [],
+      "stopAtEntry": false,
+      "cwd": "${workspaceFolder}/build",
+      "console": "integratedTerminal",
+      "preLaunchTask": "Build"
+    },
+    {
+      "name": "Debug client",
+      "type": "cppvsdbg",
+      "request": "launch",
+      "program": "${workspaceFolder}/build/RegistroClient.exe",
+      "args": ["http://127.0.0.1:9080"],
+      "stopAtEntry": false,
+      "cwd": "${workspaceFolder}/build",
+      "console": "integratedTerminal",
+      "preLaunchTask": "Build"
+    },
+    {
+      "name": "Debug test_api",
+      "type": "cppvsdbg",
+      "request": "launch",
+      "program": "${workspaceFolder}/build/test_api.exe",
+      "args": [],
+      "stopAtEntry": false,
+      "cwd": "${workspaceFolder}/build",
+      "console": "integratedTerminal",
+      "preLaunchTask": "Build"
+    },
+    {
+      "name": "Debug test_database",
+      "type": "cppvsdbg",
+      "request": "launch",
+      "program": "${workspaceFolder}/build/test_database.exe",
+      "args": [],
+      "stopAtEntry": false,
+      "cwd": "${workspaceFolder}/build",
+      "console": "integratedTerminal",
+      "preLaunchTask": "Build"
+    },
+    {
+      "name": "Debug test_log",
+      "type": "cppvsdbg",
+      "request": "launch",
+      "program": "${workspaceFolder}/build/test_log.exe",
+      "args": [],
+      "stopAtEntry": false,
+      "cwd": "${workspaceFolder}/build",
+      "console": "integratedTerminal",
+      "preLaunchTask": "Build"
+    },
+    {
+      "name": "Debug test_config",
+      "type": "cppvsdbg",
+      "request": "launch",
+      "program": "${workspaceFolder}/build/test_config.exe",
+      "args": [],
+      "stopAtEntry": false,
+      "cwd": "${workspaceFolder}/build",
+      "console": "integratedTerminal",
+      "preLaunchTask": "Build"
+    },
+    {
+      "name": "Debug test_api_client",
+      "type": "cppvsdbg",
+      "request": "launch",
+      "program": "${workspaceFolder}/build/test_api_client.exe",
+      "args": [],
+      "stopAtEntry": false,
+      "cwd": "${workspaceFolder}/build",
+      "console": "integratedTerminal",
+      "preLaunchTask": "Build"
+    },
+    {
+      "name": "Debug test_client_model",
+      "type": "cppvsdbg",
+      "request": "launch",
+      "program": "${workspaceFolder}/build/test_client_model.exe",
+      "args": [],
+      "stopAtEntry": false,
+      "cwd": "${workspaceFolder}/build",
+      "console": "integratedTerminal",
+      "preLaunchTask": "Build"
+    },
+    {
+      "name": "Debug test_client_config",
+      "type": "cppvsdbg",
+      "request": "launch",
+      "program": "${workspaceFolder}/build/test_client_config.exe",
+      "args": [],
+      "stopAtEntry": false,
+      "cwd": "${workspaceFolder}/build",
+      "console": "integratedTerminal",
+      "preLaunchTask": "Build"
+    }
+  ]
+}

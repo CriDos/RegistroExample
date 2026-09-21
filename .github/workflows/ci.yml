@@ -1,0 +1,71 @@
+name: CI
+
+on:
+  push:
+    branches:
+      - main
+      - master
+  pull_request:
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  build:
+    name: Build and Test (Release, Windows, MSVC, Qt 6.8.3)
+    runs-on: windows-latest
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v5
+
+      - name: Setup Developer Command Prompt (MSVC x64)
+        uses: ilammy/msvc-dev-cmd@v1
+        with:
+          arch: x64
+
+      - name: Install Qt 6.8.3 (MSVC 2022 x64)
+        uses: jurplel/install-qt-action@v4
+        with:
+          version: "6.8.3"
+          arch: "win64_msvc2022_64"
+          modules: "qthttpserver qtwebsockets"
+          cache: true
+
+      - name: Configure CMake (Release preset)
+        shell: pwsh
+        run: |
+          & .\scripts\run-vs.cmd cmake --preset release
+
+      - name: Build (Release preset)
+        shell: pwsh
+        run: |
+          & .\scripts\run-vs.cmd cmake --build --preset release
+
+      - name: QML Lint
+        shell: pwsh
+        run: |
+          & .\scripts\run-vs.cmd cmake --build build-release --target RegistroClient_qmllint
+
+      - name: Run Tests (QtTest suite)
+        shell: pwsh
+        run: |
+          & .\scripts\run-vs.cmd ctest --preset release
+
+      - name: Package standalone binaries (windeployqt + zip)
+        shell: pwsh
+        run: |
+          & .\scripts\release.ps1 -SkipBuild
+          $zip = (Get-ChildItem dist\RegistroExample-*.zip | Select-Object -First 1).FullName
+          if (-not $zip) { throw "Expected release zip not found in dist/" }
+          "zip=$zip" >> $env:GITHUB_OUTPUT
+        id: package
+
+      - name: Upload Build Artifacts
+        uses: actions/upload-artifact@v5
+        with:
+          name: registro-release-binaries
+          path: ${{ steps.package.outputs.zip }}
+          if-no-files-found: error
+          retention-days: 14
