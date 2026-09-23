@@ -4,6 +4,7 @@
 #include <QPasswordDigestor>
 #include <QRandomGenerator>
 #include <QStringList>
+#include <QtGlobal>
 
 namespace registro {
 
@@ -12,6 +13,16 @@ namespace {
 constexpr int kPbkdf2Iterations = 100000;
 constexpr int kMaxAcceptedIterations = 1000000;
 constexpr int kDkLen = 32;
+
+int pbkdf2Iterations()
+{
+#ifdef QT_DEBUG
+    const int overridden = qEnvironmentVariableIntValue("REGISTRO_PBKDF2_ITERATIONS");
+    if (overridden > 0)
+        return qMin(overridden, kMaxAcceptedIterations);
+#endif
+    return kPbkdf2Iterations;
+}
 
 QByteArray randomBytes(int n)
 {
@@ -37,11 +48,13 @@ bool constantTimeEquals(const QByteArray &a, const QByteArray &b)
 
 QString hashPassword(const QString &password)
 {
+    const int iterations = pbkdf2Iterations();
     const QByteArray salt = randomBytes(16);
-    const QByteArray dk = QPasswordDigestor::deriveKeyPbkdf2(
-        QCryptographicHash::Sha256, password.toUtf8(), salt, kPbkdf2Iterations, kDkLen);
+    const QByteArray dk = QPasswordDigestor::deriveKeyPbkdf2(QCryptographicHash::Sha256,
+                                                             password.toUtf8(), salt, iterations,
+                                                             kDkLen);
     return QStringLiteral("pbkdf2$%1$%2$%3")
-        .arg(kPbkdf2Iterations)
+        .arg(iterations)
         .arg(QLatin1String(salt.toHex()))
         .arg(QLatin1String(dk.toHex()));
 }

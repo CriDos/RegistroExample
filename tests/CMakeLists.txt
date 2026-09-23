@@ -49,6 +49,9 @@ foreach(registro_test IN ITEMS
     registro_add_qt_deploy(${registro_test})
 endforeach()
 
+set_property(TEST database config api log config_store api_client client_model client_config
+             APPEND PROPERTY ENVIRONMENT "REGISTRO_PBKDF2_ITERATIONS=1000")
+
 add_test(NAME qmllint
          COMMAND "${CMAKE_COMMAND}" --build "${CMAKE_BINARY_DIR}"
                  --target RegistroClient_qmllint)

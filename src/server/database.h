@@ -47,10 +47,12 @@ public:
 
     qint64 addClient(const Client &c);
     bool getClient(qint64 id, Client *out);
-    bool updateClient(qint64 id, const Client &c);
+    bool updateClient(qint64 id, const Client &c, Client *out = nullptr);
     bool deleteClient(qint64 id);
     ClientPage listClients(const ClientFilter &f);
     bool seedDemoClients(int count);
+
+    qint64 clientCount();
 
     qint64 addUser(const QString &username, const QString &passwordHash, const QString &role);
     bool getUserByUsername(const QString &username, UserRecord *out);

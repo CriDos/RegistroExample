@@ -57,7 +57,7 @@ ApplicationWindow {
         ClientsPage {}
     }
 
-    function onLoginPage() {
+    function isLoginPage() {
         return stack.currentItem && stack.currentItem.objectName === "login";
     }
 
@@ -76,14 +76,14 @@ ApplicationWindow {
                 stack.replace(clientsPage, {
                     stackView: stack
                 });
-            } else if (!root.onLoginPage())
+            } else if (!root.isLoginPage())
                 stack.replace(loginPage, {
                     banner: banner
                 });
         }
         function onAuthenticationNeeded() {
             Api.logout();
-            if (!root.onLoginPage())
+            if (!root.isLoginPage())
                 stack.replace(loginPage, {
                     banner: banner
                 });

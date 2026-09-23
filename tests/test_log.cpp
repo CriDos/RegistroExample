@@ -69,6 +69,9 @@ private slots:
 
         const QString info = formatLogLine(QtInfoMsg, ctx, QStringLiteral("GET / 200"));
         QVERIFY(!info.contains(QStringLiteral("database.cpp")));
+
+        const QString debug = formatLogLine(QtDebugMsg, ctx, QStringLiteral("m"));
+        QVERIFY(!debug.contains(QStringLiteral("database.cpp")));
     }
 
     void formatLineNoContext()

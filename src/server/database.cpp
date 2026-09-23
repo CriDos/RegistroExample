@@ -390,10 +390,7 @@ qint64 Database::addClient(const Client &c)
 
     if (!exec(q, &m_lastError))
         return 0;
-
-    QSqlQuery idq(db);
-    idq.exec(QStringLiteral("SELECT last_insert_rowid()"));
-    return idq.next() ? idq.value(0).toLongLong() : 0;
+    return q.lastInsertId().toLongLong();
 }
 
 bool Database::seedDemoClients(int count)
@@ -574,7 +571,7 @@ bool Database::getClientLocked(qint64 id, Client *out)
     return true;
 }
 
-bool Database::updateClient(qint64 id, const Client &c)
+bool Database::updateClient(qint64 id, const Client &c, Client *out)
 {
     QMutexLocker locker(&m_mutex);
     QSqlDatabase db = threadDb();
@@ -593,7 +590,10 @@ bool Database::updateClient(qint64 id, const Client &c)
         return false;
 
     Client tmp;
-    return getClientLocked(id, &tmp);
+    const bool ok = getClientLocked(id, &tmp);
+    if (ok && out)
+        *out = tmp;
+    return ok;
 }
 
 bool Database::deleteClient(qint64 id)
@@ -619,11 +619,14 @@ ClientPage Database::listClients(const ClientFilter &f)
 
     QStringList where;
     where << QStringLiteral("deleted = 0");
-    QVariantList binds;
+
+    QString statusBind;
+    QString searchBind;
+    QString digitsBind;
 
     if (!f.status.isEmpty()) {
         where << QStringLiteral("status = :status");
-        binds << f.status;
+        statusBind = f.status;
     }
     if (!f.search.isEmpty()) {
         const QString needle = f.search.toLower();
@@ -637,7 +640,7 @@ ClientPage Database::listClients(const ClientFilter &f)
             return QStringLiteral("%%1%").arg(needle);
         };
         QStringList clauses{QStringLiteral("search_name LIKE :s1 ESCAPE '\\'")};
-        binds << escapeLike(needle);
+        searchBind = escapeLike(needle);
         // Phone numbers are searchable by digits only ("9123456789" finds
         // "+7 (912) 345-67-89"), regardless of the display mask; both
         // variants are OR-ed so either form of the query matches. The
@@ -650,7 +653,7 @@ ClientPage Database::listClients(const ClientFilter &f)
         }
         if (digitsOnly.size() >= 4 && digitsOnly != needle) {
             clauses << QStringLiteral("search_name LIKE :s2 ESCAPE '\\'");
-            binds << escapeLike(digitsOnly);
+            digitsBind = escapeLike(digitsOnly);
         }
         where << QStringLiteral("(%1)").arg(clauses.join(QStringLiteral(" OR ")));
     }
@@ -659,11 +662,19 @@ ClientPage Database::listClients(const ClientFilter &f)
 
     QSqlDatabase db = threadDb();
 
+    const auto bindFilters = [&statusBind, &searchBind, &digitsBind](QSqlQuery &q) {
+        if (!statusBind.isEmpty())
+            q.bindValue(QStringLiteral(":status"), statusBind);
+        if (!searchBind.isEmpty())
+            q.bindValue(QStringLiteral(":s1"), searchBind);
+        if (!digitsBind.isEmpty())
+            q.bindValue(QStringLiteral(":s2"), digitsBind);
+    };
+
     {
         QSqlQuery q(db);
         q.prepare(QStringLiteral("SELECT COUNT(*) FROM clients WHERE %1").arg(whereSql));
-        for (const QVariant &b : binds)
-            q.addBindValue(b);
+        bindFilters(q);
         if (!exec(q, &m_lastError))
             return page;
         page.total = q.next() ? q.value(0).toLongLong() : 0;
@@ -674,8 +685,7 @@ ClientPage Database::listClients(const ClientFilter &f)
         q.prepare(QStringLiteral("SELECT %1 FROM clients WHERE %2 ORDER BY id DESC"
                                  " LIMIT :limit OFFSET :offset")
                       .arg(clientColumns().join(QStringLiteral(", ")), whereSql));
-        for (const QVariant &b : binds)
-            q.addBindValue(b);
+        bindFilters(q);
         q.bindValue(QStringLiteral(":limit"),
                     f.limit < 0 ? kMaxPageSize : qMin(f.limit, kMaxPageSize));
         q.bindValue(QStringLiteral(":offset"), f.offset < 0 ? 0 : f.offset);
@@ -714,10 +724,7 @@ qint64 Database::addUser(const QString &username, const QString &passwordHash, c
     q.bindValue(QStringLiteral(":role"), role);
     if (!exec(q, &m_lastError))
         return 0;
-
-    QSqlQuery idq(db);
-    idq.exec(QStringLiteral("SELECT last_insert_rowid()"));
-    return idq.next() ? idq.value(0).toLongLong() : 0;
+    return q.lastInsertId().toLongLong();
 }
 
 bool Database::getUserByUsername(const QString &username, UserRecord *out)
@@ -821,6 +828,17 @@ qint64 Database::userCount()
     return q.next() ? q.value(0).toLongLong() : 0;
 }
 
+qint64 Database::clientCount()
+{
+    QMutexLocker locker(&m_mutex);
+    QSqlDatabase db = threadDb();
+    QSqlQuery q(db);
+    q.prepare(QStringLiteral("SELECT COUNT(*) FROM clients WHERE deleted = 0"));
+    if (!exec(q, &m_lastError))
+        return -1;
+    return q.next() ? q.value(0).toLongLong() : 0;
+}
+
 AuditEntry Database::rowToAudit(const QVariantMap &row)
 {
     AuditEntry a;
@@ -848,10 +866,7 @@ qint64 Database::addAudit(qint64 userId, const QString &action, const QString &e
     q.bindValue(QStringLiteral(":created_at"), utcIso());
     if (!exec(q, &m_lastError))
         return 0;
-
-    QSqlQuery idq(db);
-    idq.exec(QStringLiteral("SELECT last_insert_rowid()"));
-    return idq.next() ? idq.value(0).toLongLong() : 0;
+    return q.lastInsertId().toLongLong();
 }
 
 AuditPage Database::listAudit(const AuditFilter &f)

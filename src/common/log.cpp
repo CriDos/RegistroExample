@@ -65,7 +65,8 @@ QString formatLogLine(QtMsgType type, const QMessageLogContext &ctx, const QStri
         QByteArrayView(ctx.category).startsWith(QByteArrayLiteral("registro.http"))
             ? QStringLiteral(" [http]")
             : QString();
-    const QString src = type == QtInfoMsg ? QString() : sourceLocation(ctx);
+    const bool withSource = type != QtDebugMsg && type != QtInfoMsg;
+    const QString src = withSource ? sourceLocation(ctx) : QString();
     const QString level = QStringLiteral("[%1]").arg(QChar::fromLatin1(levelChar(type)));
     QString text = msg;
     text.replace(QLatin1Char('\n'), QStringLiteral("\\n"));

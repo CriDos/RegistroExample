@@ -174,6 +174,7 @@ void ApiClient::logout()
     }
     ++m_session;
     m_token.clear();
+    m_checking = false;
     m_loggedIn = false;
     m_userName.clear();
     m_userRole.clear();
@@ -189,6 +190,7 @@ void ApiClient::setBaseUrl(const QString &url)
     emit baseUrlChanged();
     ++m_session;
     m_token.clear();
+    m_checking = false;
     m_loggedIn = false;
     if (m_loginInProgress) {
         m_loginInProgress = false;

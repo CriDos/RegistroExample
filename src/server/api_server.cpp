@@ -140,7 +140,7 @@ bool ApiServer::start(const QHostAddress &address, quint16 port, const QString &
             qCInfo(lcServer) << "demo mode: demo user already present";
         }
 
-        if (m_db.listClients(ClientFilter{}).total == 0) {
+        if (m_db.clientCount() == 0) {
             QElapsedTimer timer;
             timer.start();
             if (!m_db.seedDemoClients(kDemoClientCount)) {
@@ -167,7 +167,7 @@ bool ApiServer::start(const QHostAddress &address, quint16 port, const QString &
     m_port = m_tcpServer.serverPort();
     // Routes are registered only after a successful listen (and only once):
     // a failed start must not leave duplicate handlers for a retry.
-    m_http = m_http ? m_http : new QHttpServer;
+    m_http = new QHttpServer;
     registerRoutes();
     m_http->bind(&m_tcpServer);
     m_started = true;
@@ -189,13 +189,15 @@ void ApiServer::writeAudit(qint64 userId, const QString &action, const QString &
 
 bool ApiServer::loginThrottled(const QString &peer) const
 {
-    QList<qint64> &attempts = m_loginAttempts[peer];
     const qint64 windowStart = QDateTime::currentMSecsSinceEpoch() - kLoginWindowMs;
-    for (int i = attempts.size() - 1; i >= 0; --i) {
-        if (attempts.at(i) < windowStart)
-            attempts.removeAt(i);
+    for (auto it = m_loginAttempts.begin(); it != m_loginAttempts.end();) {
+        it.value().removeIf([windowStart](qint64 attempt) { return attempt < windowStart; });
+        if (it.value().isEmpty())
+            it = m_loginAttempts.erase(it);
+        else
+            ++it;
     }
-    return attempts.size() >= kMaxLoginAttempts;
+    return m_loginAttempts.value(peer).size() >= kMaxLoginAttempts;
 }
 
 void ApiServer::registerRoutes()
@@ -380,16 +382,16 @@ void ApiServer::registerRoutes()
 
                       const auto id = idFromQuery(req);
                       Client c;
+                      Client updated;
                       QString error;
                       if (!clientFromBody(req.body(), &c, &error))
                           return jsonError(error, QHttpServerResponse::StatusCode::BadRequest);
-                      if (!id || !m_db.updateClient(*id, c))
+                      if (!id || !m_db.updateClient(*id, c, &updated))
                           return jsonError(QStringLiteral("not found"),
                                            QHttpServerResponse::StatusCode::NotFound);
                       writeAudit(caller->id, QStringLiteral("update"), QStringLiteral("client"),
                                  *id);
-                      m_db.getClient(*id, &c);
-                      return QHttpServerResponse(clientToJson(c));
+                      return QHttpServerResponse(clientToJson(updated));
                   });
 
     m_http->route(QStringLiteral("/api/client"), QHttpServerRequest::Method::Delete,

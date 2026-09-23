@@ -57,7 +57,6 @@ Config::Config(const QString &path, QObject *parent)
                               "%2; using built-in defaults")
                    .arg(m_store->filePath(), m_store->lastError());
     }
-    m_token = m_store->stringValue("token");
 }
 
 Config::~Config()
@@ -81,15 +80,15 @@ void Config::setServerUrl(const QString &url)
 
 QString Config::token() const
 {
-    return m_token;
+    return m_store->stringValue("token");
 }
 
 void Config::setToken(const QString &token)
 {
     const QString normalized = token.trimmed();
-    if (normalized == m_token)
+    if (normalized == m_store->stringValue("token"))
         return;
-    m_token = normalized;
+    m_store->setString("token", normalized);
     emit tokenChanged();
 }
 
@@ -127,7 +126,6 @@ bool Config::demo() const
 
 void Config::save()
 {
-    m_store->setString("token", m_token);
     QString error;
     if (!m_store->save(&error))
         qCWarning(lcClient).noquote() << error;

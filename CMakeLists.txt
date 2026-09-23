@@ -1,5 +1,5 @@
 cmake_minimum_required(VERSION 3.25)
-project(RegistroExample VERSION 1.0.0 LANGUAGES CXX)
+project(RegistroExample VERSION 1.0.1 LANGUAGES CXX)
 
 option(REGISTRO_ENABLE_ANALYZE "Enable MSVC static analysis (/analyze)" OFF)
 if(REGISTRO_ENABLE_ANALYZE AND MSVC)

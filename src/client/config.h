@@ -51,7 +51,6 @@ signals:
 
 private:
     ConfigStore *m_store;
-    QString m_token;
 };
 
 } // namespace registro
